@@ -2,9 +2,11 @@ name: Build SQL Insert Docker
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
     paths:
       - 'dockers/sql-insert/**'
+  schedule:
+    - cron: '0 0 * * 1'
   workflow_dispatch:
 
 env:
