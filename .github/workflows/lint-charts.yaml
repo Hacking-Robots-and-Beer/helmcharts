@@ -36,6 +36,8 @@ jobs:
   release:
     needs: lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -57,9 +59,16 @@ jobs:
               helm package "${dir}" -d release/
             fi
           done
+          helm repo index release/
 
-      - name: Upload releases
-        uses: actions/upload-artifact@v4
-        with:
-          name: helm-releases
-          path: release/
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add release/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update Helm charts release [skip ci]"
+            git push origin HEAD:main
+          fi
