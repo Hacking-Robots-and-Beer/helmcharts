@@ -1,0 +1,119 @@
+apiVersion: v1
+entries:
+  Ingress to service:
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2026-01-25T10:02:37.528789504Z"
+    description: Deploy ingress to nginx ingress
+    digest: b66813c81ed31679c4c9ae98b508628ab7c2c0399640062c6cb1fb1c83e9262d
+    name: Ingress to service
+    urls:
+    - Ingress to service-0.1.0.tgz
+    version: 0.1.0
+  To deploy Apps:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2026-01-25T10:02:37.5290667Z"
+    description: app to deploy the other service
+    digest: 34f651f49a4c10218968dfe26316e180aa0b205aa3cbbde4da309e8bb86cbf87
+    name: To deploy Apps
+    type: application
+    urls:
+    - To deploy Apps-0.1.0.tgz
+    version: 0.1.0
+  matomo:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2026-01-25T10:02:37.529316445Z"
+    description: A Helm chart for Kubernetes
+    digest: 95e0ce5a2bb8b3a3c322a366b956649c1ffc18827f7969d7c5ab101aedaa15a6
+    name: matomo
+    type: application
+    urls:
+    - matomo-0.1.0.tgz
+    version: 0.1.0
+  mautic:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2026-01-25T10:02:37.529540193Z"
+    description: A Helm chart for Kubernetes
+    digest: dd9dfa661026a199ad8db01c09251d1abae9892c3c251bcd1f4708f04acd00ae
+    name: mautic
+    type: application
+    urls:
+    - mautic-0.1.0.tgz
+    version: 0.1.0
+  moodle:
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2026-01-25T10:02:37.529856141Z"
+    description: Moodle helmchart for elino and northamlin cloud
+    digest: ef7f2d4df3a2805c7c5a1fca5fe6d377b1ffb2cf055d6b22b82bb7f7779fa705
+    name: moodle
+    urls:
+    - moodle-0.1.0.tgz
+    version: 0.1.0
+  namespace:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2026-01-25T10:02:37.529966837Z"
+    description: A Helm chart to setup our namespace
+    digest: 8bbcfca7a3359b9516cc010ae53620ed87f7dad9759c6f8721e33fe7b5aa5a12
+    name: namespace
+    type: application
+    urls:
+    - namespace-0.1.1.tgz
+    version: 0.1.1
+  postal:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2026-01-25T10:02:37.530338249Z"
+    description: A Helm chart for Kubernetes
+    digest: 6334d8838885d194b7a4897d1ae69a28c4907182cf20ec9c204e5648054d5f95
+    name: postal
+    type: application
+    urls:
+    - postal-0.1.0.tgz
+    version: 0.1.0
+  slackbot:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2026-01-25T10:02:37.530522823Z"
+    description: A Helm chart for Kubernetes
+    digest: e1b3031c087fd73f9d6fe7b3637f78c14da297e82088f58d0f3a8a4ad234d3a2
+    name: slackbot
+    type: application
+    urls:
+    - slackbot-0.4.0.tgz
+    version: 0.4.0
+  sql-service:
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2026-01-25T10:02:37.530685516Z"
+    description: A Helm chart for Kubernetes
+    digest: bee90d07b0a2e345e2331a6252fac3795be9843caa39ce8756df2cb1d8caeff8
+    name: sql-service
+    urls:
+    - sql-service-0.1.0.tgz
+    version: 0.1.0
+  wikijs:
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2026-01-25T10:02:37.530864219Z"
+    description: Install wiki.js with localdb
+    digest: 3663686b6a59ec2e3293f236c28499a9ecab518438e24be4d51fb10aefc48621
+    name: wikijs
+    urls:
+    - wikijs-0.1.0.tgz
+    version: 0.1.0
+  wordpress:
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2026-01-25T10:02:37.531187962Z"
+    description: A Helm chart for deploying Wordpress on Elino or Northamlin Cloud
+    digest: 8dccf412648d42d6a95715b02df663a5cf97a019a7e34bed7e0f376a1d741a97
+    name: wordpress
+    urls:
+    - wordpress-0.8.0.tgz
+    version: 0.8.0
+generated: "2026-01-25T10:02:37.528520733Z"
