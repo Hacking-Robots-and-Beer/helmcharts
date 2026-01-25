@@ -33,13 +33,13 @@ spec:
     spec:
       containers:
         - name: {{ .Values.deployname }}
-          image: "git.booli.se:4567/booli/slackbot:{{ .Values.gitsha }}"
+          image: "gc.ose/slackbot"
           imagePullPolicy: Always
           env:
             - name: BACKEND
               value: Slack
             - name: BOT_IDENTITY
-              value: {{ .Values.slacktoken }
+              value: {{ .Values.slacktoken }}
             - name: CHATROOM_PRESENCE
               value: ()
           ports:

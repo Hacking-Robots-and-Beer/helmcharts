@@ -24,13 +24,22 @@ spec:
             - name: DB_PORT
               value: "3306"
             - name: DB_USER
-              value: {{ .Values.dbuser }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-mysql-secret
+                  key: mysql-user
             - name: DB_PASS
-              value: '{{ .Values.dbpass }}'
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-mysql-secret
+                  key: mysql-password
             - name: SITENAME
               value: {{ .Values.url }}
             - name: DB_NAME
-              value: {{ .Values.name}}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-mysql-secret
+                  key: mysql-database
           ports:
             - containerPort: 3000
               name: wiki
@@ -55,4 +64,3 @@ spec:
                value: Awesome
            initialDelaySeconds: 180
            periodSeconds: 3
-

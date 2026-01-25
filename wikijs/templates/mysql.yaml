@@ -18,13 +18,25 @@ spec:
           name: {{ .Values.name }}-mysql-pod
           env:
             - name: MYSQL_USER
-              value: {{ .Values.dbuser }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-mysql-secret
+                  key: mysql-user
             - name: MYSQL_PASSWORD
-              value: '{{ .Values.dbpass }}'
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-mysql-secret
+                  key: mysql-password
             - name: MYSQL_ROOT_PASSWORD
-              value: {{ .Values.dbpass }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-mysql-secret
+                  key: mysql-root-password
             - name: MYSQL_DATABASE
-              value: {{ .Values.name}}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-mysql-secret
+                  key: mysql-database
           ports:
             - containerPort: 3306
               name: sql
@@ -54,9 +66,20 @@ spec:
   selector:
     app: {{ .Values.name }}-mysql-pod
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.name }}-mysql-secret
+type: Opaque
+data:
+  mysql-user: {{ .Values.dbuser | b64enc | quote }}
+  mysql-password: {{ .Values.dbpass | b64enc | quote }}
+  mysql-root-password: {{ .Values.dbpass | b64enc | quote }}
+  mysql-database: {{ .Values.name | b64enc | quote }}
+---
 
 
-    kind: PersistentVolumeClaim
+kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: {{ .Values.name }}-mysql-disk

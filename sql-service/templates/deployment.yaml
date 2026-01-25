@@ -1,16 +1,22 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
-      name: sql-proxy
-      app.kubernetes.io/name: sql-proxy
-      app.kubernetes.io/instance: {{ .Release.Name }}
-
+  name: sql-proxy
+  labels:
+    app.kubernetes.io/name: sql-proxy
+    app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sql-proxy
+      app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        name: sql-proxy-pod 
+        app.kubernetes.io/name: sql-proxy
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        name: sql-proxy-pod
     spec:
       containers:
         # Change [INSTANCE_CONNECTION_NAME] here to include your GCP

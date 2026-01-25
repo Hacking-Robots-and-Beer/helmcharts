@@ -20,11 +20,20 @@ spec:
             - name: MAUTIC_DB_HOST
               value: '{{ .Values.dbhost}}'
             - name: MAUTIC_DB_USER
-              value: '{{ .Values.dbuser}}'
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-mysql-secret
+                  key: mysql-user
             - name: MAUTIC_DB_PASSWORD
-              value: '{{ .Values.dbpass}}'
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-mysql-secret
+                  key: mysql-password
             - name: MAUTIC_DB_NAME
-              value: '{{ .Values.dbname }}'
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-mysql-secret
+                  key: mysql-database
             - name: MAUTIC_RUN_CRON_JOBS
               value: 'true'
             - name: SITENAME
