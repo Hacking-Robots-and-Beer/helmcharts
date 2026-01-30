@@ -1,12 +1,26 @@
-# Default values for wordpress.
+# Default values for wikijs.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
+
+uuid: hbdftsrfed
 name: matte-wiki
 repo: requarks
 image: wiki:2
+url: wiki.apps.northamlin.com
+
+dbhost: mysql
 dbuser: wiki
 dbpass: password
-url: wiki.apps.northamlin.com
-dbhost: mysql
+dbname: wiki
+dburl: https://raw.githubusercontent.com/northamlin/helmcharts/master/dockers/sql-insert/db/wikijs.sql
 
-
+hosting:
+  tags:
+    norh/deployname: wikijs
+    norh/resources: low
+    norh/deploydate: date
+    norh/userid: userid
+    norh/id: idss
+  id:
+    - 1234-1234-22333
+  repo: github.com/braveops/helmrepo/wikijs
