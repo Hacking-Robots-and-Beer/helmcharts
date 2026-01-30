@@ -2,18 +2,22 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.name }}
+  annotations:
+      {{-  range $key, $topping := $.Values.hosting.tags }}
+      {{ $key }}: {{ $topping }}
+      {{- end }} 
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.name }}-mautic 
+      app: {{ .Values.name }}-{{ .Values.uuid }} 
   template:
     metadata:
       labels:
-        app: {{ .Values.name }}-mautic 
+        app: {{ .Values.name }}-{{ .Values.uuid }} 
     spec:
       containers:
-        - image: {{ .Values.image_base }}/{{.Values.image}}
+        - image: {{.Values.image}}
           imagePullPolicy: Always
           name: {{ .Values.name }}
           env:
@@ -21,19 +25,16 @@ spec:
               value: '{{ .Values.dbhost}}'
             - name: MAUTIC_DB_USER
               valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.name }}-mysql-secret
-                  key: mysql-user
+                 secretKeyRef:
+                   name: {{ .Values.name }}-{{ .Values.uuid }}
+                   key: SQL_USER
             - name: MAUTIC_DB_PASSWORD
               valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.name }}-mysql-secret
-                  key: mysql-password
+                 secretKeyRef:
+                   name: {{ .Values.name }}-{{ .Values.uuid }}
+                   key: SQL_PASSWORD
             - name: MAUTIC_DB_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.name }}-mysql-secret
-                  key: mysql-database
+              value: {{ .Values.dbname }}
             - name: MAUTIC_RUN_CRON_JOBS
               value: 'true'
             - name: SITENAME
@@ -41,26 +42,52 @@ spec:
             - name: MAUTIC_TRUSTED_PROXIES
               value: '["0.0.0.0/0"]'
             - name: MAUTIC_URL
-              value: {{ .Values.name }}-mautic
+              value: https://{{ .Values.url }}
             - name: MAUTIC_ADMIN_EMAIL
-              value: matte@elino.se
+              value: {{ .Values.adminEmail }}
             - name: MAUTIC_ADMIN_PASSWORD
-              value: "testAdminPassword3322!"
+              value: {{ .Values.mauticpass | quote }}
             - name: MAUTIC_ADMIN_USERNAME
-              value: "adminuser"
+              value: {{ .Values.mauticuser }}
             - name: MAUTIC_ADMIN_FIRSTNAME
-              value: firstname
+              value: {{ .Values.adminFirstName }}
             - name: MAUTIC_ADMIN_LASTNAME
-              value: lastname
+              value: {{ .Values.adminLastName }}
             - name: MAUTIC_INSTALL_FORCE
-              value: "true"
-        
+              value: {{ .Values.forceInstall | quote }}
           ports:
             - containerPort: 80
               name: http
           resources:
+          {{ if eq .Values.resource "low" }}
             requests:
-              cpu: 100m
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          {{ else if eq .Values.resource "medium" }}
+            requests:
+              memory: "256Mi"
+              cpu: "500m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+          {{ else if eq .Values.resource "high" }}
+            requests:
+              memory: "2048Mi"
+              cpu: "1000m"
+            limits:
+              memory: "4096Mi"
+              cpu: "2000m"
+          {{ else if eq .Values.resource "custom" }}
+            requests:
+              memory: {{ .Values.memory }}
+              cpu: {{ .Values.cpu }}
+            limits:
+              memory: {{ .Values.memory }}
+              cpu: {{ .Values.cpu }}
+          {{ end }}
           #livenessProbe:
           # httpGet:
           #   path: /healthz/index.html
@@ -87,7 +114,7 @@ metadata:
   labels:
     app: {{ .Values.name }}-mautic 
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - port: 80
       targetPort: 80

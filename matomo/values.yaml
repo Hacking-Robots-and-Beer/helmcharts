@@ -1,27 +1,21 @@
-# Default values for mautic.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
-name: matomo
-
-
 replicaCount: 1
 
+uuid: hbdftsrfed
+name: matomo
 image: matomo
+url: matomo-test.server.robots.beer
 
 
-dbuser: postal
-dbpass: postalpass
+
 dbhost: mysql
-dbname: postal
-proto: https
-url: www.matomo.se
-SSLPROXY: true
+dbuser: matomo
+dbpass: password
+dbname: matomo
 
-resources:
-   limits:
-     cpu: 100m
-     memory: 128Mi
-   requests:
-     cpu: 100m
-     memory: 128Mi
+hosting:
+  tags:
+    host/deployname: matomo
+    host/resources: low
+    host/deploydate: date
+    host/userid: userid
+    host/id: idss

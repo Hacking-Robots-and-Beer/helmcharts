@@ -1,16 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.name }}
+  name: {{ .Values.name }}-{{ .Values.uuid }}
+  annotations:
+      {{-  range $key, $topping := $.Values.hosting.tags }}
+      {{ $key }}: {{ $topping }}
+      {{- end }} 
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ .Values.name }}-matomo
+      app: {{ .Values.name }}-{{ .Values.uuid }}
   template:
     metadata:
       labels:
-        app: {{ .Values.name }}-matomo 
+        app: {{ .Values.name }}-{{ .Values.uuid }} 
     spec:
       containers:
         - image: {{.Values.image}}
@@ -18,15 +22,21 @@ spec:
           name: {{ .Values.name }}
           env:
             - name: MATOMO_DATABASE_HOST
-              value: '{{ .Values.dbhost}}'
+              value: {{ .Values.dbhost }}
             - name: MATOMO_DATABASE_USERNAME
-              value: '{{ .Values.dbuser}}'
+              valueFrom:
+                 secretKeyRef:
+                   name: {{ .Values.name }}-{{ .Values.uuid }}
+                   key: SQL_USER
             - name: MATOMO_DATABASE_PASSWORD
-              value: '{{ .Values.dbpass}}'
+              valueFrom:
+                 secretKeyRef:
+                   name: {{ .Values.name }}-{{ .Values.uuid }}
+                   key: SQL_PASSWORD
             - name: MATOMO_DATABASE_DBNAME
-              value: '{{ .Values.dbname }}'
+              value: {{ .Values.dbname }}
             - name: SITENAME
-              value: '{{ .Values.url }}'
+              value: {{ .Values.url }}
           ports:
             - containerPort: 80
               name: http
@@ -55,14 +65,18 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.name }}-matomo
+  name: {{ .Values.name }}-{{ .Values.uuid }}
   labels:
-    app: {{ .Values.name }}-matomo 
+    app: {{ .Values.name }}-{{ .Values.uuid }}
+  annotations:
+      {{-  range $key, $topping := $.Values.hosting.tags }}
+      {{ $key }}: {{ $topping }}
+      {{- end }} 
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - port: 80
       targetPort: 80
       protocol: TCP
   selector:
-    app: {{ .Values.name }}-matomo 
+    app: {{ .Values.name }}-{{ .Values.uuid }}

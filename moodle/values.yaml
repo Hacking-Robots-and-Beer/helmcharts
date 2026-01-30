@@ -1,20 +1,22 @@
-# Default values for wordpress.
+# Default values for moodle.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 name: moodle
 repo: elino
-image: moodle:v4.4.0
+image: moodlehq/moodle-php-apache:8.2-bullseye
 #dbuser: moodle we use name instead
 dbpass: password
 proto: https
-image_base: elino
-url: demo.uggla.io
+url: moodle.server.robots.beer
 SSLPROXY: true
 kubedomainname: appselinose
-dbhost: main-mysql-master.code.svc
 dbport: 3306
 storage: 10Gi
-storageClass: default
+dbuser: moodle
+dbpass: password
+uuid: 12345
+
+storageClass: hcloud-volumes
 seedSource: https://storage.googleapis.com/elino-public-assets/sql/moodle/uggla_seed.sql
 seed: "true"
 adminPasswordSecret: mysql-cluster
@@ -22,6 +24,39 @@ adminPasswordSecretValue: ROOT_PASSWORD
 cronUrl: https://storage.googleapis.com/elino-public-assets/sql/moodle/moodle-cron.tar.gz
 cronSecret: moodle-cron
 
+mysql-cluster:
+  enabled: true
+  mysqlRootPassword: ROOT_PASSWORD
+  mysqlUser: moodle
+  mysqlPassword: password
+  mysqlDatabase: moodle
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: http
+    kubernetes.io/tls-acme: "true"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure,web
+
+  hosts:
+    - host: moodle.server.robots.beer
+      paths:
+        - path: /
+          pathType: Prefix
+
+  tls:
+    - secretName: moodle-tls
+      hosts:
+        - moodle.server.robots.beer
+
+service:
+  annotations:
+    norh/deployname: moodle
+    norh/resources: low
+    norh/deploydate: date
+    norh/userid: userid
+    norh/id: idss
 
 hosting:
   tags: 
@@ -33,9 +68,15 @@ hosting:
   id:
     - 1234-1234-22333
   repo: github.com/elino/helmrepo/moodle
+  
+podAnnotations:
+  norh/deployname: moodle
+  norh/resources: low
+  norh/deploydate: date
+  norh/userid: userid
+  norh/id: idss
 
-
-resource: 
+resource: low
 #Only for custom
 cpu: 100m
 memory: 128Mi

@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Values.name }}-db-init
+  name: {{ .Values.name }}-{{ .Values.uuid }}-db-init
 spec:
   template:
     spec:
@@ -10,20 +10,31 @@ spec:
         image: mattiashem/init
         env:
           - name: DEST_DBPASS
-            value: "{{ .Values.dbpass }}"
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.name }}-{{ .Values.uuid }}
+                key: SQL_PASSWORD
           - name: DEST_DBUSER
-            value: "{{ .Values.name }}"
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.name }}-{{ .Values.uuid }}
+                key: SQL_USER
           - name: DEST_DB
-            value: "{{ .Values.name }}"
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.name }}-{{ .Values.uuid }}
+                key: SQL_USER
           - name: DBHOST
-            value: "{{ .Values.dbhost }}"
+            value: {{ .Values.name }}-{{ .Values.uuid }}-mysql-master
+          - name: DBPORT
+            value: "{{ .Values.dbport }}"
           - name: ROOT
             value: "root"
           - name: ROOTPASS
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.adminPasswordSecret }}
-                key: {{ .Values.adminPasswordSecretValue }}
+                name: {{ .Values.name }}-{{ .Values.uuid }}
+                key: ROOT_PASSWORD
           - name: SEED_DB
             value: "{{ .Values.seed }}"
           - name: SEED_SOURCE

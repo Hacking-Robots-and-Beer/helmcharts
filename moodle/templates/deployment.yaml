@@ -1,16 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.name }}
+  name: {{ .Values.name }}-{{ .Values.uuid }}
+  labels:
+    app: {{ .Values.name }}-{{ .Values.uuid }}
+    {{- toYaml .Values.hosting.tags | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.hosting.tags | nindent 4 }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.name }}-moodle-pod 
+      app: {{ .Values.name }}-{{ .Values.uuid }}
   template:
     metadata:
       labels:
-        app: {{ .Values.name }}-moodle-pod 
+        app: {{ .Values.name }}-{{ .Values.uuid }}
+        {{- toYaml .Values.hosting.tags | nindent 8 }}
+      annotations:
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
     spec:
       containers:
         - args:
@@ -22,28 +30,29 @@ spec:
           - containerPort: 9113
             name: metrics
             protocol: TCP
-        - image: {{ .Values.image_base }}/{{.Values.image}}
-          imagePullPolicy: Always
-          name: moodle
+        - name: {{ .Values.name }}
+          image: "{{ .Values.image }}"
           env:
-            - name: DBHOST
-              value: {{ .Values.dbhost}}:{{ .Values.dbport }}
-            - name: REDIS
-              value: {{ .Values.name}}-redis-service
-            - name: PROTO
-              value: {{ .Values.proto}}
-            - name: DBUSER
-              value: {{ .Values.name }}
-            - name: DBPASS
-              value: '{{ .Values.dbpass }}'
-            - name: SITENAME
-              value: {{ .Values.url }}
-            - name: DB
-              value: {{ .Values.name}}
+            - name: MOODLE_DB_HOST
+              value: {{ .Values.name }}-{{ .Values.uuid }}-mysql-master
+            - name: MOODLE_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: SQL_USER
+            - name: MOODLE_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: SQL_PASSWORD
+            - name: MOODLE_DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: SQL_USER
           ports:
             - containerPort: 80
-              name: moodle
-          resources:
+          resources:          
           {{ if eq .Values.resource "low" }}
             requests:
               memory: "64Mi"
@@ -76,25 +85,7 @@ spec:
           volumeMounts:
             - name: moodle-persistent-storage
               mountPath: /var/www/html/shared
-          livenessProbe:
-           httpGet:
-             path: /healthz/index.html
-             port: 80
-             httpHeaders:
-             - name: X-Custom-Header
-               value: Awesome
-           initialDelaySeconds: 180
-           periodSeconds: 3
-          readinessProbe:
-           httpGet:
-             path: /healthz/index.html
-             port: 80
-             httpHeaders:
-             - name: X-Custom-Header
-               value: Awesome
-           initialDelaySeconds: 180
-           periodSeconds: 3
       volumes:
         - name: moodle-persistent-storage
           persistentVolumeClaim:
-            claimName: {{ .Values.name }}-moodle-disk
+            claimName: {{ .Values.name }}-{{ .Values.uuid }}

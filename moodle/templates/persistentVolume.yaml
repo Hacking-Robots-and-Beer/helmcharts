@@ -1,7 +1,7 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: {{ .Values.name }}-moodle-disk
+  name: {{ .Values.name }}-{{ .Values.uuid }}
 spec:
   accessModes:
     - ReadWriteOnce

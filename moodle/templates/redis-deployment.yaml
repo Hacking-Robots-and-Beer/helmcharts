@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.name }}-redis
+  name: {{ .Values.name }}-{{ .Values.uuid }}-redis
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.name }}-redis-pod 
+      app: {{ .Values.name }}-{{ .Values.uuid }}-redis-pod 
   template:
     metadata:
       labels:
-        app: {{ .Values.name }}-redis-pod 
+        app: {{ .Values.name }}-{{ .Values.uuid }}-redis-pod 
     spec:
       containers:
         - image: redis
           imagePullPolicy: Always
-          name: {{ .Values.name }}-redis-pod
+          name: {{ .Values.name }}-{{ .Values.uuid }}-redis-pod
           ports:
             - containerPort: 6379
               name: redis

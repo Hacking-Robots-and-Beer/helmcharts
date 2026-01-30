@@ -28,7 +28,6 @@ spec:
           - name: MYSQL_ROOT_PASSWORD
             valueFrom:
                secretKeyRef:
-                 name: {{ .Values.name }}-{{ .Values.uuid }}
+                 name: mysql-cluster
                  key: ROOT_PASSWORD
       restartPolicy: Never
-

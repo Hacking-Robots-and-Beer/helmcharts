@@ -1,0 +1,3 @@
+#/bin/bash 
+echo "Deploy script to test the chart doing local developing"
+helm upgrade --install wordpress-test  --debug .  -n test-ns
