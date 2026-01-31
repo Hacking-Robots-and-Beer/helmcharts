@@ -2,26 +2,18 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 name: moodle
-repo: elino
 image: moodlehq/moodle-php-apache:8.2-bullseye
-#dbuser: moodle we use name instead
 dbpass: password
 proto: https
 url: moodle.server.robots.beer
-SSLPROXY: true
-kubedomainname: appselinose
 dbport: 3306
 storage: 10Gi
 dbuser: moodle
-dbpass: password
 uuid: 12345
 
 storageClass: hcloud-volumes
 seedSource: https://storage.googleapis.com/elino-public-assets/sql/moodle/uggla_seed.sql
 seed: "true"
-adminPasswordSecret: mysql-cluster
-adminPasswordSecretValue: ROOT_PASSWORD
-cronUrl: https://storage.googleapis.com/elino-public-assets/sql/moodle/moodle-cron.tar.gz
 cronSecret: moodle-cron
 
 mysql-cluster:
@@ -59,16 +51,13 @@ service:
     norh/id: idss
 
 hosting:
-  tags: 
+  tags:
     norh/deployname: moodle
     norh/resources: low
     norh/deploydate: date
     norh/userid: userid
     norh/id: idss
-  id:
-    - 1234-1234-22333
-  repo: github.com/elino/helmrepo/moodle
-  
+
 podAnnotations:
   norh/deployname: moodle
   norh/resources: low

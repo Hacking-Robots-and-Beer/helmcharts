@@ -6,7 +6,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.name }}{{ .Values.version }}-mysql-pod
+      app: {{ .Values.name }}-mysql-pod
   template:
     metadata:
       labels:

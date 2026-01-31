@@ -6,7 +6,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.name }}{{ .Values.version }}-wiki-pod
+      app: {{ .Values.name }}-wiki-pod
   template:
     metadata:
       labels:

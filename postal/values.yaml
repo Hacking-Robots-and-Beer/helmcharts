@@ -12,20 +12,12 @@ dbuser: postal
 dbpass: password
 dbhost: mysql-pxc.sql.svc
 dbname: postal
-proto: https
 
 rqhost: rabbitmq
 rquser: postal
 rqpass: postal
 rqvhost: postal
 
-resources:
-   limits:
-     cpu: 100m
-     memory: 128Mi
-   requests:
-     cpu: 100m
-     memory: 128Mi
 signingkey: |
      -----BEGIN PRIVATE KEY-----
 

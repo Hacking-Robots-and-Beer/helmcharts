@@ -1,11 +1,14 @@
-# Default values for wordpress.
+# Default values for wikijs.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
+uuid: hbdftsrfed
 name: matte-wiki
 repo: requarks
 image: wiki:2
 dbuser: wiki
 dbpass: password
+dbname: wiki
+dburl: ""
 url: wiki.apps.northamlin.com
 dbhost: mysql
 

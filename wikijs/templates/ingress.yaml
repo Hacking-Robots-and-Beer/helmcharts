@@ -12,14 +12,17 @@ metadata:
 spec:
   tls:
   - hosts:
-    -  {{ .Values.url }}
+    - {{ .Values.url }}
     secretName: {{ .Values.url }}
   rules:
   - host: {{ .Values.url }}
     http:
       paths:
       - path: /
+        pathType: Prefix
         backend:
-         serviceName: {{ .Values.name }}-service
-         servicePort: 80
+          service:
+            name: {{ .Values.name }}-service
+            port:
+              number: 80
 
