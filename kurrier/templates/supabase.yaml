@@ -1,0 +1,342 @@
+# Kong API Gateway
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}-{{ .Values.uuid }}-kong
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}-{{ .Values.uuid }}-kong
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}-{{ .Values.uuid }}-kong
+    spec:
+      containers:
+        - image: kong:2.8.1
+          imagePullPolicy: IfNotPresent
+          name: kong
+          env:
+            - name: KONG_DATABASE
+              value: "off"
+            - name: KONG_DECLARATIVE_CONFIG
+              value: /home/kong/kong.yml
+            - name: KONG_DNS_ORDER
+              value: LAST,A,CNAME
+            - name: KONG_PLUGINS
+              value: request-transformer,cors,key-auth,acl,basic-auth,request-termination,ip-restriction
+            - name: KONG_NGINX_PROXY_PROXY_BUFFER_SIZE
+              value: 160k
+            - name: KONG_NGINX_PROXY_PROXY_BUFFERS
+              value: 64 160k
+            - name: SUPABASE_ANON_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: ANON_KEY
+            - name: SUPABASE_SERVICE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: SERVICE_ROLE_KEY
+            - name: DASHBOARD_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: DASHBOARD_USERNAME
+            - name: DASHBOARD_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: DASHBOARD_PASSWORD
+          ports:
+            - containerPort: 8000
+              name: http
+            - containerPort: 8443
+              name: https
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: kong-config
+              mountPath: /home/kong/
+      volumes:
+        - name: kong-config
+          configMap:
+            name: {{ .Values.name }}-{{ .Values.uuid }}-kong
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.name }}-{{ .Values.uuid }}-kong
+  labels:
+    app: {{ .Values.name }}-{{ .Values.uuid }}-kong
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+    - port: 8443
+      targetPort: 8443
+      protocol: TCP
+      name: https
+  selector:
+    app: {{ .Values.name }}-{{ .Values.uuid }}-kong
+---
+# GoTrue Auth
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}-{{ .Values.uuid }}-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}-{{ .Values.uuid }}-auth
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}-{{ .Values.uuid }}-auth
+    spec:
+      containers:
+        - image: supabase/gotrue:v2.183.0
+          imagePullPolicy: IfNotPresent
+          name: auth
+          env:
+            - name: GOTRUE_API_HOST
+              value: "0.0.0.0"
+            - name: GOTRUE_API_PORT
+              value: "9999"
+            - name: API_EXTERNAL_URL
+              value: {{ .Values.supabasePublicUrl }}
+            - name: GOTRUE_DB_DRIVER
+              value: postgres
+            - name: GOTRUE_DB_DATABASE_URL
+              value: postgres://supabase_auth_admin:$(POSTGRES_PASSWORD)@{{ .Values.name }}-{{ .Values.uuid }}-pg-rw:5432/{{ .Values.dbname }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: POSTGRES_PASSWORD
+            - name: GOTRUE_SITE_URL
+              value: {{ .Values.siteUrl }}
+            - name: GOTRUE_DISABLE_SIGNUP
+              value: "false"
+            - name: GOTRUE_JWT_ADMIN_ROLES
+              value: service_role
+            - name: GOTRUE_JWT_AUD
+              value: authenticated
+            - name: GOTRUE_JWT_DEFAULT_GROUP_NAME
+              value: authenticated
+            - name: GOTRUE_JWT_EXP
+              value: "{{ .Values.jwtExpiry }}"
+            - name: GOTRUE_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: JWT_SECRET
+            - name: GOTRUE_EXTERNAL_EMAIL_ENABLED
+              value: "true"
+            - name: GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED
+              value: "false"
+            - name: GOTRUE_MAILER_AUTOCONFIRM
+              value: "true"
+            - name: GOTRUE_SMTP_ADMIN_EMAIL
+              value: {{ .Values.smtpAdminEmail }}
+            - name: GOTRUE_SMTP_HOST
+              value: {{ .Values.smtpHost }}
+            - name: GOTRUE_SMTP_PORT
+              value: "{{ .Values.smtpPort }}"
+            - name: GOTRUE_SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: SMTP_USER
+            - name: GOTRUE_SMTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: SMTP_PASS
+            - name: GOTRUE_SMTP_SENDER_NAME
+              value: {{ .Values.smtpSenderName }}
+          ports:
+            - containerPort: 9999
+              name: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.name }}-{{ .Values.uuid }}-auth
+  labels:
+    app: {{ .Values.name }}-{{ .Values.uuid }}-auth
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9999
+      targetPort: 9999
+      protocol: TCP
+  selector:
+    app: {{ .Values.name }}-{{ .Values.uuid }}-auth
+---
+# PostgREST
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}-{{ .Values.uuid }}-rest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}-{{ .Values.uuid }}-rest
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}-{{ .Values.uuid }}-rest
+    spec:
+      containers:
+        - image: postgrest/postgrest:v14.1
+          imagePullPolicy: IfNotPresent
+          name: rest
+          env:
+            - name: PGRST_DB_URI
+              value: postgres://authenticator:$(POSTGRES_PASSWORD)@{{ .Values.name }}-{{ .Values.uuid }}-pg-rw:5432/{{ .Values.dbname }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: POSTGRES_PASSWORD
+            - name: PGRST_DB_SCHEMAS
+              value: public,storage,graphql_public
+            - name: PGRST_DB_ANON_ROLE
+              value: anon
+            - name: PGRST_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: JWT_SECRET
+            - name: PGRST_DB_USE_LEGACY_GUCS
+              value: "false"
+            - name: PGRST_APP_SETTINGS_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: JWT_SECRET
+            - name: PGRST_APP_SETTINGS_JWT_EXP
+              value: "{{ .Values.jwtExpiry }}"
+          ports:
+            - containerPort: 3000
+              name: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.name }}-{{ .Values.uuid }}-rest
+  labels:
+    app: {{ .Values.name }}-{{ .Values.uuid }}-rest
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    app: {{ .Values.name }}-{{ .Values.uuid }}-rest
+---
+# Supabase Storage
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}-{{ .Values.uuid }}-storage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}-{{ .Values.uuid }}-storage
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}-{{ .Values.uuid }}-storage
+    spec:
+      containers:
+        - image: supabase/storage-api:v1.33.0
+          imagePullPolicy: IfNotPresent
+          name: storage
+          env:
+            - name: ANON_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: ANON_KEY
+            - name: SERVICE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: SERVICE_ROLE_KEY
+            - name: POSTGREST_URL
+              value: http://{{ .Values.name }}-{{ .Values.uuid }}-rest:3000
+            - name: PGRST_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: JWT_SECRET
+            - name: DATABASE_URL
+              value: postgres://supabase_storage_admin:$(POSTGRES_PASSWORD)@{{ .Values.name }}-{{ .Values.uuid }}-pg-rw:5432/{{ .Values.dbname }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: POSTGRES_PASSWORD
+            - name: FILE_SIZE_LIMIT
+              value: "52428800"
+            - name: STORAGE_BACKEND
+              value: file
+            - name: FILE_STORAGE_BACKEND_PATH
+              value: /var/lib/storage
+            - name: TENANT_ID
+              value: stub
+            - name: REGION
+              value: stub
+            - name: GLOBAL_S3_BUCKET
+              value: stub
+            - name: ENABLE_IMAGE_TRANSFORMATION
+              value: "false"
+          ports:
+            - containerPort: 5000
+              name: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: storage-data
+              mountPath: /var/lib/storage
+      volumes:
+        - name: storage-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.name }}-{{ .Values.uuid }}-storage
+  labels:
+    app: {{ .Values.name }}-{{ .Values.uuid }}-storage
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP
+  selector:
+    app: {{ .Values.name }}-{{ .Values.uuid }}-storage

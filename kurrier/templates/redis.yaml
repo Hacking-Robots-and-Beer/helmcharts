@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}-{{ .Values.uuid }}-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}-{{ .Values.uuid }}-redis
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}-{{ .Values.uuid }}-redis
+    spec:
+      containers:
+        - image: redis:8.2.2
+          imagePullPolicy: IfNotPresent
+          name: redis
+          command: ["redis-server", "--requirepass", "$(REDIS_PASSWORD)"]
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: REDIS_PASSWORD
+          ports:
+            - containerPort: 6379
+              name: redis
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.name }}-{{ .Values.uuid }}-redis
+  labels:
+    app: {{ .Values.name }}-{{ .Values.uuid }}-redis
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: 6379
+      protocol: TCP
+  selector:
+    app: {{ .Values.name }}-{{ .Values.uuid }}-redis

@@ -1,0 +1,64 @@
+# Default values for kurrier.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+uuid: hbdftsrfed
+name: kurrier
+url: mail.server.robots.beer
+
+webImage: ghcr.io/kurrier-org/kurrier-web:v1.1.11
+workerImage: ghcr.io/kurrier-org/kurrier-worker:v1.1.11
+
+# PostgreSQL (CNPG)
+dbuser: kurrier
+dbpass: changeme
+dbname: postgres
+dbInstances: 1
+dbStorage: 10Gi
+
+# Redis
+redisPassword: changeme
+
+# Typesense
+typesenseApiKey: changeme
+
+# JWT / Auth
+jwtSecret: your-super-secret-jwt-token-with-at-least-32-characters
+jwtExpiry: 3600
+anonKey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.changeme
+serviceRoleKey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.changeme
+
+# Application secrets
+rlsClientPassword: changeme
+secretKeyBase: changeme
+vaultEncKey: changeme-min-32-characters-long!!
+dashboardUsername: admin
+dashboardPassword: changeme
+
+# Supabase
+supabasePublicUrl: http://localhost:8000
+siteUrl: http://localhost:3000
+
+# SMTP for auth emails
+smtpHost: smtp.example.com
+smtpPort: "587"
+smtpUser: ""
+smtpPass: ""
+smtpSenderName: Kurrier
+smtpAdminEmail: admin@example.com
+
+resource: low
+#Only for custom
+cpu: 100m
+memory: 128Mi
+
+storage: 10Gi
+storageClass: standard
+
+hosting:
+  tags:
+    host/deployname: kurrier
+    host/resources: low
+    host/deploydate: date
+    host/userid: userid
+    host/id: idss

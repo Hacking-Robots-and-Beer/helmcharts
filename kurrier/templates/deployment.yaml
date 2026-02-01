@@ -1,0 +1,256 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ .Values.name }}-{{ .Values.uuid }}
+  annotations:
+      {{-  range $key, $topping := $.Values.hosting.tags }}
+      {{ $key }}: {{ $topping }}
+      {{- end }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.storage }}
+  storageClassName: {{ .Values.storageClass }}
+
+---
+# Kurrier Web
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}-{{ .Values.uuid }}-web
+  annotations:
+      {{-  range $key, $topping := $.Values.hosting.tags }}
+      {{ $key }}: {{ $topping }}
+      {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}-{{ .Values.uuid }}-web
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}-{{ .Values.uuid }}-web
+    spec:
+      containers:
+        - image: {{ .Values.webImage }}
+          imagePullPolicy: Always
+          name: web
+          env:
+            - name: WEB_PORT
+              value: "3000"
+            - name: WEB_URL
+              value: https://{{ .Values.url }}
+            - name: DATABASE_URL
+              value: postgres://{{ .Values.dbuser }}:$(POSTGRES_PASSWORD)@{{ .Values.name }}-{{ .Values.uuid }}-pg-rw:5432/{{ .Values.dbname }}
+            - name: DATABASE_RLS_URL
+              value: postgres://rls_client:$(RLS_CLIENT_PASSWORD)@{{ .Values.name }}-{{ .Values.uuid }}-pg-rw:5432/{{ .Values.dbname }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: POSTGRES_PASSWORD
+            - name: RLS_CLIENT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: RLS_CLIENT_PASSWORD
+            - name: API_PUBLIC_URL
+              value: {{ .Values.supabasePublicUrl }}
+            - name: API_URL
+              value: http://{{ .Values.name }}-{{ .Values.uuid }}-kong:8000
+            - name: ANON_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: ANON_KEY
+            - name: SERVICE_ROLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: SERVICE_ROLE_KEY
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: REDIS_PASSWORD
+            - name: REDIS_HOST
+              value: {{ .Values.name }}-{{ .Values.uuid }}-redis
+            - name: REDIS_PORT
+              value: "6379"
+            - name: TYPESENSE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: TYPESENSE_API_KEY
+            - name: TYPESENSE_PORT
+              value: "8108"
+            - name: TYPESENSE_PROTOCOL
+              value: http
+            - name: TYPESENSE_HOST
+              value: {{ .Values.name }}-{{ .Values.uuid }}-typesense
+            - name: SEARCH_REBUILD_ON_BOOT
+              value: "false"
+            - name: WORKER_URL
+              value: http://{{ .Values.name }}-{{ .Values.uuid }}-worker:3001
+          ports:
+            - containerPort: 3000
+              name: http
+          resources:
+          {{ if eq .Values.resource "low" }}
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          {{ else if eq .Values.resource "medium" }}
+            requests:
+              memory: "256Mi"
+              cpu: "500m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+          {{ else if eq .Values.resource "high" }}
+            requests:
+              memory: "2048Mi"
+              cpu: "1000m"
+            limits:
+              memory: "4096Mi"
+              cpu: "2000m"
+          {{ else if eq .Values.resource "custom" }}
+            requests:
+              memory: {{ .Values.memory }}
+              cpu: {{ .Values.cpu }}
+            limits:
+              memory: {{ .Values.memory }}
+              cpu: {{ .Values.cpu }}
+          {{ end }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 5
+---
+# Kurrier Worker
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}-{{ .Values.uuid }}-worker
+  annotations:
+      {{-  range $key, $topping := $.Values.hosting.tags }}
+      {{ $key }}: {{ $topping }}
+      {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}-{{ .Values.uuid }}-worker
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}-{{ .Values.uuid }}-worker
+    spec:
+      containers:
+        - image: {{ .Values.workerImage }}
+          imagePullPolicy: Always
+          name: worker
+          env:
+            - name: WEB_PORT
+              value: "3000"
+            - name: WEB_URL
+              value: https://{{ .Values.url }}
+            - name: NITRO_PORT
+              value: "3001"
+            - name: DATABASE_URL
+              value: postgres://{{ .Values.dbuser }}:$(POSTGRES_PASSWORD)@{{ .Values.name }}-{{ .Values.uuid }}-pg-rw:5432/{{ .Values.dbname }}
+            - name: DATABASE_RLS_URL
+              value: postgres://rls_client:$(RLS_CLIENT_PASSWORD)@{{ .Values.name }}-{{ .Values.uuid }}-pg-rw:5432/{{ .Values.dbname }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: POSTGRES_PASSWORD
+            - name: RLS_CLIENT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: RLS_CLIENT_PASSWORD
+            - name: API_PUBLIC_URL
+              value: {{ .Values.supabasePublicUrl }}
+            - name: API_URL
+              value: http://{{ .Values.name }}-{{ .Values.uuid }}-kong:8000
+            - name: ANON_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: ANON_KEY
+            - name: SERVICE_ROLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: SERVICE_ROLE_KEY
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: REDIS_PASSWORD
+            - name: REDIS_HOST
+              value: {{ .Values.name }}-{{ .Values.uuid }}-redis
+            - name: REDIS_PORT
+              value: "6379"
+            - name: TYPESENSE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}-{{ .Values.uuid }}
+                  key: TYPESENSE_API_KEY
+            - name: TYPESENSE_PORT
+              value: "8108"
+            - name: TYPESENSE_PROTOCOL
+              value: http
+            - name: TYPESENSE_HOST
+              value: {{ .Values.name }}-{{ .Values.uuid }}-typesense
+            - name: SEARCH_REBUILD_ON_BOOT
+              value: "false"
+          ports:
+            - containerPort: 3001
+              name: http
+          resources:
+          {{ if eq .Values.resource "low" }}
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          {{ else if eq .Values.resource "medium" }}
+            requests:
+              memory: "256Mi"
+              cpu: "500m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+          {{ else if eq .Values.resource "high" }}
+            requests:
+              memory: "2048Mi"
+              cpu: "1000m"
+            limits:
+              memory: "4096Mi"
+              cpu: "2000m"
+          {{ else if eq .Values.resource "custom" }}
+            requests:
+              memory: {{ .Values.memory }}
+              cpu: {{ .Values.cpu }}
+            limits:
+              memory: {{ .Values.memory }}
+              cpu: {{ .Values.cpu }}
+          {{ end }}

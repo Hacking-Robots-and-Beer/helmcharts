@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: "1.1.11"
+description: A Helm chart for deploying Kurrier email frontend on Northamlin Cloud
+name: kurrier
+type: application
+version: 0.1.0
